@@ -1,10 +1,10 @@
 select *
-from PortfolioProject.dbo.covid_deaths
+from covid_deaths
 where continent is not null
 order by 3, 4
 
 select *
-from PortfolioProject.dbo.covid_vaccinations
+from covid_vaccinations
 order by 3, 4
 
 -- Select data that we are going to be using
@@ -47,7 +47,8 @@ select location
 	, population
 	, max((total_cases / population)) * 100 as pop_infectec_percentage
 from covid_deaths
-group by location, population
+group by location
+	, population
 order by pop_infectec_percentage desc
 
 -- Showing countries with highest death count per population
@@ -85,7 +86,7 @@ select dea.continent
 	, dea.date
 	, dea.population
 	, vac.new_vaccinations_smoothed
-	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
+	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as rolling_people_vaccinated
 from covid_deaths dea
 join covid_vaccinations vac on dea.location = vac.location
 							and dea.date = vac.date
@@ -102,7 +103,7 @@ select dea.continent
 	, dea.date
 	, dea.population
 	, vac.new_vaccinations_smoothed
-	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
+	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as rolling_people_vaccinated
 from covid_deaths dea
 join covid_vaccinations vac on dea.location = vac.location
 							and dea.date = vac.date
@@ -111,15 +112,15 @@ where dea.continent is not null
 )
 
 select *
-	, (RollingPeopleVaccinated / population) * 100
+	, (rolling_people_vaccinated / population) * 100
 from popvsvac
 order by 1,2
 
 -- Temp Table
 
-drop table if exists #PercentPopulationVaccinated
+drop table if exists #percent_population_vaccinated
 
-create table #PercentPopulationVaccinated (
+create table #percent_population_vaccinated (
 	continent nvarchar(255),
 	location nvarchar(255),
 	date datetime,
@@ -128,13 +129,13 @@ create table #PercentPopulationVaccinated (
 	RollingPeopleVaccinated numeric
 )
 
-insert into #PercentPopulationVaccinated
+insert into #percent_population_vaccinated
 select dea.continent
 	, dea.location
 	, dea.date
 	, dea.population
 	, vac.new_vaccinations_smoothed
-	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
+	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as rolling_people_vaccinated
 from covid_deaths dea
 join covid_vaccinations vac on dea.location = vac.location
 							and dea.date = vac.date
@@ -142,13 +143,13 @@ where dea.continent is not null
 
 -- Views
 
-create view PercentPopulationVaccinated as
+create view percent_population_vaccinated as
 select dea.continent
 	, dea.location
 	, dea.date
 	, dea.population
 	, vac.new_vaccinations_smoothed
-	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
+	, sum(cast(vac.new_vaccinations_smoothed as bigint)) over (partition by dea.location order by dea.location, dea.date) as rolling_people_vaccinated
 from covid_deaths dea
 join covid_vaccinations vac on dea.location = vac.location
 							and dea.date = vac.date
