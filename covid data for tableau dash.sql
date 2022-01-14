@@ -1,14 +1,12 @@
-/*
-Queries used for Tableau Project
-*/
+
 
 
 
 -- 1. 
 
-Select SUM(new_cases) as total_cases
-	, SUM(cast(new_deaths as int)) as total_deaths
-	, SUM(cast(new_deaths as int))/SUM(New_Cases)*100 as DeathPercentage
+select sum(new_cases) as total_cases
+	, sum(cast(new_deaths as int)) as total_deaths
+	, sum(cast(new_deaths as int))/sum(New_Cases)*100 as death_percentage
 From covid_deaths
 --Where location like '%states%'
 where continent is not null 
@@ -18,29 +16,30 @@ order by 1,2
 
 -- 2. 
 
--- We take these out as they are not inluded in the above queries and want to stay consistent
--- European Union is part of Europe
+-- These are not included in the above queries and want to stay consistent
 
-Select location, SUM(cast(new_deaths as int)) as TotalDeathCount
-From covid_deaths
+select location 
+	, sum(cast(new_deaths as int)) as total_death_count
+from covid_deaths
 --Where location like '%states%'
-Where continent is null 
-and location not in ('World', 'European Union', 'International', 'Upper middle income',
+where continent is null 
+	and location not in ('World', 'European Union', 'International', 'Upper middle income',
 					 'Lower middle income', 'High income', 'Low income')
-Group by location
-order by TotalDeathCount desc
+group by location
+order by total_death_count desc
 
 
 -- 3.
 
-Select Location
+select Location
 	, Population
-	, MAX(total_cases) as HighestInfectionCount
-	, MAX((total_cases/population))*100 as PercentPopulationInfected
-From covid_deaths
+	, max(total_cases) as highest_infection_count
+	, max((total_cases/population))*100 as percent_population_infected
+from covid_deaths
 --Where location like '%states%'
-Group by Location, Population
-order by PercentPopulationInfected desc
+group by Location
+	, Population
+order by percent_population_infected desc
 
 
 -- 4.
@@ -49,12 +48,14 @@ order by PercentPopulationInfected desc
 Select Location
 	, Population
 	, date
-	, MAX(total_cases) as HighestInfectionCount
-	,  Max((total_cases/population))*100 as PercentPopulationInfected
+	, max(total_cases) as highest_infection_count
+	, max((total_cases/population))*100 as percent_population_infected
 From covid_deaths
 --Where location like '%states%'
-Group by Location, Population, date
-order by PercentPopulationInfected desc
+Group by Location
+	, Population
+	, date
+order by percent_population_infected desc
 
 
 
