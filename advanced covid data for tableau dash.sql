@@ -25,7 +25,7 @@ order by continent
 
 select sum(new_cases) as total_cases
 	, sum(cast(new_deaths as int)) as total_deaths
-	, sum(cast(new_deaths as int))/sum(New_Cases)*100 as DeathPercentage
+	, sum(cast(new_deaths as int))/sum(New_Cases)*100 as death_percentage
 from covid_deaths
 --where location like '%states%'
 where continent is not null 
@@ -38,25 +38,25 @@ where continent is not null
 -- These are not included in the above queries and want to stay consistent
 
 select location
-	, sum(cast(new_deaths as int)) as TotalDeathCount
+	, sum(cast(new_deaths as int)) as total_death_count
 from covid_deaths
 --where location like '%states%'
 where continent is null 
 	and location not in ('World', 'European Union', 'International', 'Upper middle income', 'High income', 'Lower middle income', 'Low income')
 group by location
-order by TotalDeathCount desc
+order by total_death_count desc
 
 -- 4
 -- Just left with the income ranges
 
 select location
-	, sum(cast(new_deaths as int)) as TotalDeathCount
+	, sum(cast(new_deaths as int)) as total_death_count
 from covid_deaths
 --where location like '%states%'
 where continent is null 
 	and location not in ('World', 'European Union', 'International', 'Europe', 'Asia', 'North America', 'South America', 'Africa', 'Oceania')
 group by location
-order by TotalDeathCount desc
+order by total_death_count desc
 
 -- 5
 
@@ -75,7 +75,7 @@ order by percent_population_infected desc
 
 select location
 	, Population
-	, max(total_deaths) as Highest_deaths
+	, max(total_deaths) as highest_deaths
 	, max(total_cases) as highest_infection_count
 	, max((total_cases/population))*100 as percent_population_infected
 	, max((total_deaths/population))*100 as percent_population_dead
@@ -100,14 +100,14 @@ select dea.continent
 	, dea.date
 	, dea.population
 	, vac.new_vaccinations
-	, sum(cast(vac.new_vaccinations as bigint)) over (partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+	, sum(cast(vac.new_vaccinations as bigint)) over (partition by dea.Location Order by dea.location, dea.Date) as rolling_people_vaccinated
 from covid_deaths dea
 join covid_vaccinations vac on dea.location = vac.location
 							and dea.date = vac.date
 where dea.continent is not null 
 )
 select *
-	, (RollingPeopleVaccinated/Population)*100 as PercentPeopleVaccinated
+	, (rolling_people_vaccinated/Population)*100 as percent_people_vaccinated
 from PopvsVac
 
 
@@ -116,11 +116,11 @@ from PopvsVac
 select Location
 	, Population
 	, date
-	, max(total_cases) as HighestInfectionCount
-	, max((total_cases/population))*100 as PercentPopulationInfected
+	, max(total_cases) as highest_infection_count
+	, max((total_cases/population))*100 as percent_population_infected
 from covid_deaths
 --Where location like '%states%'
 group by Location
 		, Population
 		, date
-order by PercentPopulationInfected desc
+order by percent_population_infected desc
